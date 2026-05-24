@@ -46,6 +46,19 @@ export interface BatchOpts {
  * Build `count` puzzles for a theme. Each puzzle gets its own seeded word
  * shuffle so the same theme produces varied subsets across the book.
  */
+/** Tiny seeded shuffle used to mix the deck on each wrap. */
+function shuffleInPlace<T>(arr: T[], seed: number) {
+  let s = (seed >>> 0) || 1;
+  const rng = () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
 export async function generateBatch(
   theme: string,
   baseSeed: number,
@@ -59,11 +72,36 @@ export async function generateBatch(
   const book: BookPuzzle[] = [];
   const warnings: string[] = [];
 
+  // Full pool of usable theme words (no n cap). Building the per-puzzle word
+  // lists as contiguous slices off a shuffled-and-recycled deck guarantees
+  // every word in the pool appears across the book before any word repeats,
+  // and that word frequencies stay even.
+  const fullPool = wordsForTheme(theme, 1e9, ((baseSeed + 0x9e3779b9) >>> 0) || 1);
+  const totalNeeded = count * wordsPerPuzzle;
+  const deck: string[] = [];
+  let passSeed = (baseSeed >>> 0) || 1;
+  while (deck.length < totalNeeded) {
+    const oneDeck = [...fullPool];
+    shuffleInPlace(oneDeck, passSeed);
+    deck.push(...oneDeck);
+    passSeed = ((passSeed * 16807) >>> 0) || 1;
+  }
+
   for (let i = 0; i < count; i++) {
-    // Two seeds so the word pick and placement RNG don't collapse together.
-    const wordSeed = ((baseSeed + i * 9176) >>> 0) || 1;
     const placeSeed = ((baseSeed ^ (i * 2654435761)) >>> 0) || 7;
-    const words = wordsForTheme(theme, wordsPerPuzzle, wordSeed);
+    // Contiguous slice of the recycled deck — words are guaranteed unique
+    // within the puzzle as long as fullPool.length >= wordsPerPuzzle.
+    let words = deck.slice(i * wordsPerPuzzle, (i + 1) * wordsPerPuzzle);
+    if (new Set(words).size < words.length) {
+      // We wrapped mid-puzzle and picked a duplicate. De-dupe and top up
+      // from the front of the next pool segment.
+      const unique = Array.from(new Set(words));
+      for (const w of fullPool) {
+        if (unique.length >= wordsPerPuzzle) break;
+        if (!unique.includes(w)) unique.push(w);
+      }
+      words = unique.slice(0, wordsPerPuzzle);
+    }
     if (words.length < wordsPerPuzzle) {
       warnings.push(
         `Puzzle ${i + 1}: only ${words.length}/${wordsPerPuzzle} usable words for "${theme}".`,
