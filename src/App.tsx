@@ -126,18 +126,17 @@ export default function App() {
 
       <div className="panel">
         <div className="row">
-          <input
+          <select
+            className="keyword-select"
             value={keyword}
-            placeholder="e.g. animals, sea, vehicles, dinosaurs"
-            list="keywords"
             onChange={(e) => setKeyword(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && generate()}
-          />
-          <datalist id="keywords">
+          >
             {CANONICAL_KEYWORDS.map((k) => (
-              <option key={k} value={k} />
+              <option key={k} value={k}>
+                {k}
+              </option>
             ))}
-          </datalist>
+          </select>
           <label className="num">
             Puzzles
             <input
