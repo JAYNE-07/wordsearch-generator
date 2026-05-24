@@ -46,12 +46,13 @@ export interface BatchOpts {
  * Build `count` puzzles for a theme. Each puzzle gets its own seeded word
  * shuffle so the same theme produces varied subsets across the book.
  */
-export function generateBatch(
+export async function generateBatch(
   theme: string,
   baseSeed: number,
   count: number,
   opts: BatchOpts = {},
-): { book: BookPuzzle[]; warnings: string[] } {
+  onProgress?: (done: number, total: number) => void,
+): Promise<{ book: BookPuzzle[]; warnings: string[] }> {
   const cols = opts.cols ?? 18;
   const rows = opts.rows ?? 18;
   const wordsPerPuzzle = opts.wordsPerPuzzle ?? 14;
@@ -70,6 +71,10 @@ export function generateBatch(
     }
     const puzzle = placeWords(words, cols, rows, placeSeed);
     book.push({ puzzle, index: i });
+    onProgress?.(i + 1, count);
+    // Yield to the UI thread every few puzzles so the progress bar renders
+    // instead of the browser appearing frozen.
+    if ((i + 1) % 5 === 0) await tick();
   }
 
   return { book, warnings };

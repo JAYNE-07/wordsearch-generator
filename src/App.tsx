@@ -34,20 +34,23 @@ export default function App() {
   const current = book[page] ?? null;
   const busy = progress !== null || status === 'loading';
 
-  const generate = useCallback(() => {
+  const generate = useCallback(async () => {
     const theme = keyword.trim();
     if (!theme || busy) return;
     setStatus('loading');
     setError('');
     setWarnings([]);
     setBook([]);
+    setProgress({ label: 'Building puzzles', done: 0, total: count });
     seedRef.current = Math.floor(Math.random() * 1e9);
     try {
-      const { book: list, warnings: warns } = generateBatch(
+      const { book: list, warnings: warns } = await generateBatch(
         theme,
         seedRef.current,
         count,
         { wordsPerPuzzle },
+        (done, total) =>
+          setProgress({ label: 'Building puzzles', done, total }),
       );
       setBook(list);
       setWarnings(Array.from(new Set(warns)).slice(0, 5));
@@ -57,6 +60,8 @@ export default function App() {
     } catch (e) {
       setStatus('error');
       setError(e instanceof Error ? e.message : 'Something went wrong.');
+    } finally {
+      setProgress(null);
     }
   }, [keyword, busy, count, wordsPerPuzzle]);
 
