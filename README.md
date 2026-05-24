@@ -1,27 +1,26 @@
 # Theme Word Search Generator
 
-React + Vite + TypeScript app that turns a single theme keyword into a printable
-PDF book of word-search puzzles. Forked from
-[`maze-generator`](https://github.com/JAYNE-07/maze-generator).
+Generate printable word-search puzzle books in any theme — type a keyword
+(`animals`, `food`, `vehicles`, `space`…), get a book of 1–500 puzzles where
+every page is a different on-theme word list.
 
-- 18×18 letter grid (configurable)
-- Up to 14 words per puzzle (configurable)
-- Directions: horizontal, vertical, diagonal-down-right, diagonal-up-right
-- Themes drawn from the same 165-keyword dictionary as the maze generator
-- Exports: PDF book (5×8, 6×9, A4) + ZIP of PNGs
-- Answer key pages at the back of the book
+Themes share the same 165-keyword dictionary as the [maze book generator](https://jayne-07.github.io/maze-generator/).
+In-browser PDF/PNG/ZIP export. Pages sized for 5×8″, 6×9″, or A4 trim.
+Answer-key pages at the back of the book.
 
-## Develop
+**Live site:** https://jayne-07.github.io/wordsearch-generator/
 
-```bash
+## Run locally
+
+```sh
 npm install
-npm run dev
+npm run dev      # http://localhost:5173/
+npm run build    # production bundle in dist/
+npm run preview  # preview the production build
 ```
 
-## Build / deploy
+## Defaults
 
-```bash
-npm run build
-```
-
-Pushing to `main` deploys to GitHub Pages via `.github/workflows/deploy.yml`.
+- 18×18 letter grid (configurable in the UI)
+- Up to 14 words per puzzle (configurable, min 4)
+- Directions: horizontal, vertical, diagonal-down-right, diagonal-up-right
