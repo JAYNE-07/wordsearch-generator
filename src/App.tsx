@@ -214,7 +214,7 @@ export default function App() {
                 download(
                   renderPuzzlePage(
                     current.puzzle,
-                    28,
+                    90,
                     `${showAnswer ? 'Answer' : 'Puzzle'} ${page + 1}`,
                     { answerKey: showAnswer },
                   ).toDataURL('image/png'),

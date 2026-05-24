@@ -111,7 +111,10 @@ export async function exportBookPdf(
   const pw = pdf.internal.pageSize.getWidth();
   const ph = pdf.internal.pageSize.getHeight();
   const name = titleCase(theme);
-  const CELL = pageSize === '5x8' ? 22 : pageSize === '6x9' ? 24 : 26;
+  // High render-resolution per cell. The PDF placeCanvas() downsizes to
+  // fit the page, so a big source canvas guarantees crisp letters at
+  // print (300 DPI) and on retina screens.
+  const CELL = pageSize === '5x8' ? 72 : pageSize === '6x9' ? 80 : 88;
 
   // Cover page (jsPDF starts with one blank page).
   const coverTitle = Math.min(52, pw * 0.11);
@@ -195,7 +198,8 @@ export async function exportBookZip(
   const puzzleDir = zip.folder('puzzles')!;
   const answerDir = zip.folder('answers')!;
   const pad = (n: number) => String(n).padStart(3, '0');
-  const CELL = 28;
+  // Same high-resolution as the PDF — readable when printed at any size.
+  const CELL = 90;
 
   for (let i = 0; i < book.length; i++) {
     const { puzzle } = book[i];
