@@ -4,6 +4,7 @@ import {
   exportBookPdf,
   exportBookZip,
   generateBatch,
+  type AnswerLayout,
   type BookPuzzle,
   type PageSize,
 } from './lib/book';
@@ -20,6 +21,7 @@ export default function App() {
   const [count, setCount] = useState(50);
   const [wordsPerPuzzle, setWordsPerPuzzle] = useState(14);
   const [pageSize, setPageSize] = useState<PageSize>('6x9');
+  const [answerLayout, setAnswerLayout] = useState<AnswerLayout>('end');
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState('');
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -99,7 +101,7 @@ export default function App() {
     setProgress({ label, done: 0, total: book.length * (kind === 'pdf' ? 2 : 1) });
     try {
       const cb = (d: number, t: number) => setProgress({ label, done: d, total: t });
-      if (kind === 'pdf') await exportBookPdf(book, keyword, pageSize, cb);
+      if (kind === 'pdf') await exportBookPdf(book, keyword, pageSize, cb, answerLayout);
       else await exportBookZip(book, keyword, cb);
     } finally {
       setProgress(null);
@@ -170,6 +172,16 @@ export default function App() {
               <option value="6x9">6 × 9 in</option>
               <option value="5x8">5 × 8 in</option>
               <option value="a4">A4</option>
+            </select>
+          </label>
+          <label className="sel">
+            Answers
+            <select
+              value={answerLayout}
+              onChange={(e) => setAnswerLayout(e.target.value as AnswerLayout)}
+            >
+              <option value="end">All at the back</option>
+              <option value="interleaved">After each puzzle</option>
             </select>
           </label>
         </div>

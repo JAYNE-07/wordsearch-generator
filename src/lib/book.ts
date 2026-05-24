@@ -94,11 +94,14 @@ function placeCanvas(pdf: jsPDF, canvas: HTMLCanvasElement) {
   pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, w, h, undefined, 'FAST');
 }
 
+export type AnswerLayout = 'interleaved' | 'end';
+
 export async function exportBookPdf(
   book: BookPuzzle[],
   theme: string,
   pageSize: PageSize,
   onProgress: (done: number, total: number) => void,
+  answerLayout: AnswerLayout = 'end',
 ) {
   const pdf = new jsPDF({
     orientation: 'portrait',
@@ -122,7 +125,11 @@ export async function exportBookPdf(
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(coverSub);
   pdf.text(
-    `${book.length} puzzles  ·  answer key at the back`,
+    `${book.length} puzzles  ·  ${
+      answerLayout === 'interleaved'
+        ? 'answer follows each puzzle'
+        : 'answer key at the back'
+    }`,
     pw / 2,
     ph * 0.4 + coverTitle * 0.95 + coverSub * 2.4,
     { align: 'center' },
@@ -132,32 +139,48 @@ export async function exportBookPdf(
   let done = 0;
   const fmt = PAGE_FORMATS[pageSize];
 
-  // Puzzle pages.
-  for (let i = 0; i < book.length; i++) {
-    const { puzzle } = book[i];
+  if (answerLayout === 'interleaved') {
+    // Puzzle then its own answer, repeated for every puzzle.
+    for (let i = 0; i < book.length; i++) {
+      const { puzzle } = book[i];
+      pdf.addPage(fmt, 'portrait');
+      placeCanvas(pdf, renderPuzzlePage(puzzle, CELL, `Puzzle ${i + 1}`));
+      done++;
+      onProgress(done, total);
+      pdf.addPage(fmt, 'portrait');
+      placeCanvas(
+        pdf,
+        renderPuzzlePage(puzzle, CELL, `Answer ${i + 1}`, { answerKey: true }),
+      );
+      done++;
+      onProgress(done, total);
+      if (i % 4 === 0) await tick();
+    }
+  } else {
+    // All puzzles first, then an "ANSWER KEY" divider, then all answers.
+    for (let i = 0; i < book.length; i++) {
+      const { puzzle } = book[i];
+      pdf.addPage(fmt, 'portrait');
+      placeCanvas(pdf, renderPuzzlePage(puzzle, CELL, `Puzzle ${i + 1}`));
+      done++;
+      onProgress(done, total);
+      if (i % 4 === 0) await tick();
+    }
     pdf.addPage(fmt, 'portrait');
-    placeCanvas(pdf, renderPuzzlePage(puzzle, CELL, `Puzzle ${i + 1}`));
-    done++;
-    onProgress(done, total);
-    if (i % 4 === 0) await tick();
-  }
-
-  // Answer key section.
-  pdf.addPage(fmt, 'portrait');
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(Math.min(36, pw * 0.08));
-  pdf.text('ANSWER KEY', pw / 2, ph * 0.5, { align: 'center' });
-
-  for (let i = 0; i < book.length; i++) {
-    const { puzzle } = book[i];
-    pdf.addPage(fmt, 'portrait');
-    placeCanvas(
-      pdf,
-      renderPuzzlePage(puzzle, CELL, `Answer ${i + 1}`, { answerKey: true }),
-    );
-    done++;
-    onProgress(done, total);
-    if (i % 4 === 0) await tick();
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(Math.min(36, pw * 0.08));
+    pdf.text('ANSWER KEY', pw / 2, ph * 0.5, { align: 'center' });
+    for (let i = 0; i < book.length; i++) {
+      const { puzzle } = book[i];
+      pdf.addPage(fmt, 'portrait');
+      placeCanvas(
+        pdf,
+        renderPuzzlePage(puzzle, CELL, `Answer ${i + 1}`, { answerKey: true }),
+      );
+      done++;
+      onProgress(done, total);
+      if (i % 4 === 0) await tick();
+    }
   }
 
   pdf.save(`${slugify(theme)}-wordsearch-book-${pageSize}.pdf`);
