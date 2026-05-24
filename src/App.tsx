@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { renderPuzzlePage } from './lib/render';
+import { CANONICAL_KEYWORDS } from './lib/themes';
 import {
   exportBookPdf,
   exportBookZip,
@@ -128,9 +129,15 @@ export default function App() {
           <input
             value={keyword}
             placeholder="e.g. animals, sea, vehicles, dinosaurs"
+            list="keywords"
             onChange={(e) => setKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && generate()}
           />
+          <datalist id="keywords">
+            {CANONICAL_KEYWORDS.map((k) => (
+              <option key={k} value={k} />
+            ))}
+          </datalist>
           <label className="num">
             Puzzles
             <input
