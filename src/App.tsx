@@ -189,7 +189,11 @@ export default function App() {
         <p className="note">
           General words expand per puzzle (e.g. <em>animals</em> → cat, dog,
           rat…). Each puzzle is an 18×18 grid with up to {wordsPerPuzzle} words
-          placed horizontally, vertically, or diagonally.
+          placed horizontally, vertically, or diagonally.{' '}
+          <a href="./keywords.csv" download>
+            Download the full 165-keyword list (CSV)
+          </a>
+          .
         </p>
 
         {book.length > 0 && (
